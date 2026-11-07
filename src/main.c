@@ -13,7 +13,6 @@ by Jeffery Myers is marked with CC0 1.0. To view a copy of this license, visit h
 #include <stdio.h>
 #include <stdlib.h>
 
-enum DIMENSION {TWO= 2, THREE= 3};
 #define RLIGHTS_IMPLEMENTATION
 #include "rlights.h"
 
@@ -22,6 +21,9 @@ int main(void)
     SetConfigFlags(FLAG_VSYNC_HINT | FLAG_WINDOW_HIGHDPI);
     InitWindow(1000, 800, "Hello Raylib");
     SearchAndSetResourceDir("resources");
+
+	// Dimensions Init
+	char dimensions[4][11] = {"2D", "3D", "Hyperbolic", "4D?"};
 
     Camera camera = { 0 };
     camera.position   = (Vector3){ 0.0f, 2.0f, 10.0f };
@@ -43,7 +45,7 @@ int main(void)
     lights[0] = CreateLight(LIGHT_POINT, (Vector3){25.0f,25.0f,25.0f}, Vector3Zero(), WHITE, shader);
 
     Model floor = LoadModel("../assets/ground.glb");
-    Vector3 floor_pos = { 0.0f, 0.0f, 0.0f };
+    Vector3 floor_pos = { 0.0f, -30.0f, 0.0f };
 
     Model red_cube = LoadModel("../assets/tree2.glb");
     Vector3 red_cube_pos = { 0.0f, 1.0f, 0.0f };
@@ -54,9 +56,9 @@ int main(void)
     for (int i = 0; i < red_cube.materialCount; i++) red_cube.materials[i].shader = shader;
 
     const float turnSpeed = 90.0f * DEG2RAD;   // radians per second
-    const float moveSpeed = 5.0f;              // world units per second
+    const float moveSpeed = 30.0f;              // world units per second
 
-	enum DIMENSION currentDimension = THREE;
+	int currentDimension = 0;
 
     while (!WindowShouldClose())
     {
@@ -106,11 +108,9 @@ int main(void)
         }
 
 	if (IsKeyPressed(KEY_E)) {
-		if (currentDimension == THREE) {
-			currentDimension = TWO;
-		} else {
-			currentDimension = THREE;
-		}
+		printf("%d", currentDimension);
+		currentDimension = (currentDimension + 1)%(sizeof(dimensions)/sizeof(dimensions[0]));
+		printf("%d %s", currentDimension, dimensions[currentDimension]);
 	}
 
         // Keep the light on the camera and push the new values to the shader
@@ -138,9 +138,11 @@ int main(void)
 
         EndMode3D();
 		
+		// Setting Box
+		DrawRectangle(0, 0, 250, 30, ColorAlpha(BLACK, 0.5f));
 		char *currentDimensionString = (char*)malloc(13 * sizeof(char));
-		sprintf(currentDimensionString, "%dD mode active", currentDimension);
-		DrawText(currentDimensionString,100,100,20,WHITE);
+		sprintf(currentDimensionString, "%s mode active", dimensions[currentDimension]);
+		DrawText(currentDimensionString,5,5,20,WHITE);
 
 
         EndDrawing();
