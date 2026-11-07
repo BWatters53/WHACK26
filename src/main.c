@@ -21,14 +21,16 @@ int main(void)
     // Not looking straight down anymore, so "up" isn't parallel to the view direction
     Camera camera = { 0 };
     camera.position   = (Vector3){ 0.0f, 2.0f, 10.0f };
-    camera.target     = (Vector3){ 50.0f, 0.0f, 50.0f };
+    camera.target     = (Vector3){ 50.0f, 2.0f, 50.0f };
     camera.up         = (Vector3){ 0.0f, 1.0f, 0.0f };
     camera.fovy       = 45.0f;
     camera.projection = CAMERA_PERSPECTIVE;
 
-    Texture wabbit = LoadTexture("wabbit_alpha.png");
     Model floor = LoadModel("../assets/ground.glb");
     Vector3 floor_pos = { 0.0f, 0.0f, 0.0f };
+
+    Model red_cube = LoadModel("../assets/redCube.glb");
+    Vector3 red_cube_pos = { 0.0f, 1.0f, 0.0f };
 
     const float turnSpeed = 90.0f * DEG2RAD;   // radians per second
 
@@ -53,18 +55,40 @@ int main(void)
             camera.target = Vector3Add(camera.position, forward);
         }
 
+        // +1 for forward, -1 for backward, 0 for neither/both
+        float move = 0.0f;
+        if (IsKeyDown(KEY_UP)) move += 1.0f;
+        if (IsKeyDown(KEY_DOWN)) move -= 1.0f;
+
+        if (move != 0.0f)
+        {
+            // View direction relative to the camera, not the world origin
+            Vector3 forward = Vector3Subtract(camera.target, camera.position);
+
+            forward = Vector3Scale(forward, 1.0f * move * dt);
+
+            camera.position = Vector3Add(camera.position, forward);
+
+            // Move the target back out from the camera position
+            camera.target = Vector3Add(camera.target, forward);
+
+        }
+
         BeginDrawing();
         ClearBackground(BLACK);
-        DrawText("Hello Raylib", 200, 200, 20, WHITE);
+
+        // Draw the models
 
         BeginMode3D(camera);
+
         DrawModel(floor, floor_pos, 1.0f, WHITE);
+        DrawModel(red_cube, red_cube_pos, 1.0f, RED);
+
         EndMode3D();
 
         EndDrawing();
     }
 
-    UnloadTexture(wabbit);
     UnloadModel(floor);
     CloseWindow();
     return 0;
