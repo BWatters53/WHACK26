@@ -11,6 +11,9 @@ by Jeffery Myers is marked with CC0 1.0. To view a copy of this license, visit h
 #include "raymath.h"        // Vector3Subtract, Vector3Add, Vector3RotateByAxisAngle
 #include "resource_dir.h"
 #include <stdio.h>
+#include <stdlib.h>
+
+enum DIMENSION {TWO= 2, THREE= 3};
 
 int main(void)
 {
@@ -33,6 +36,8 @@ int main(void)
     Vector3 red_cube_pos = { 0.0f, 1.0f, 0.0f };
 
     const float turnSpeed = 90.0f * DEG2RAD;   // radians per second
+
+	enum DIMENSION currentDimension = THREE;
 
     while (!WindowShouldClose())
     {
@@ -74,6 +79,14 @@ int main(void)
 
         }
 
+		if (IsKeyPressed(KEY_E)) {
+			if (currentDimension == THREE) {
+				currentDimension = TWO;
+			} else {
+				currentDimension = THREE;
+			}
+		}
+
         BeginDrawing();
         ClearBackground(BLACK);
 
@@ -85,6 +98,10 @@ int main(void)
         DrawModel(red_cube, red_cube_pos, 1.0f, RED);
 
         EndMode3D();
+		
+		char *currentDimensionString = (char*)malloc(13 * sizeof(char));
+		sprintf(currentDimensionString, "%dD mode active", currentDimension);
+		DrawText(currentDimensionString,100,100,20,WHITE);
 
         EndDrawing();
     }
