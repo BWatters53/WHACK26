@@ -47,12 +47,14 @@ int main ()
 	Vector3 floor_pos = { 0.0f, 0.0f, 0.0f };
 
 	
+	int counter = 0;
 	// game loop
 	while (!WindowShouldClose())		// run the loop until the user presses ESCAPE or presses the Close button on the window
 	{
-		if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT)) {
+		if (IsKeyDown(KEY_RIGHT)) {
 			double transformation_mat[3][3] = {{cos(20.0*(PI/180.0)), 0.0, sin(20.0*(PI/180.0))},{0.0,1.0,0.0},{-sin(20.0*(PI/180.0)),0.0,cos(20.0*(PI/180.0))}};
-			printf("%d",transformation_mat[0][0]);
+			printf("i am printing a %d\n",transformation_mat[0][0]);
+			printf("atnoehusantoehusnth%d\n",counter++);
 			camera.target = transformVector3(camera.target,transformation_mat);
 		}
 		// drawing
