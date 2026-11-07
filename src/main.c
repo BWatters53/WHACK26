@@ -8,82 +8,64 @@ by Jeffery Myers is marked with CC0 1.0. To view a copy of this license, visit h
 */
 
 #include "raylib.h"
-#include "math.h"
-
-#include "resource_dir.h"	// utility header for SearchAndSetResourceDir
-#include <math.h>
+#include "raymath.h"        // Vector3Subtract, Vector3Add, Vector3RotateByAxisAngle
+#include "resource_dir.h"
 #include <stdio.h>
 
-Vector3 transformVector3(Vector3 vec, double mat[3][3]) 
+int main(void)
 {
-	Vector3 outputVector = (Vector3) {vec.x*mat[0][0] + vec.y*mat[0][1] + vec.z*mat[0][2], vec.x*mat[1][0] + vec.y*mat[1][1] + vec.z*mat[1][2],vec.x*mat[2][0] + vec.y*mat[2][1] + vec.z*mat[2][2]};
-	return outputVector;
+    SetConfigFlags(FLAG_VSYNC_HINT | FLAG_WINDOW_HIGHDPI);
+    InitWindow(800, 600, "Hello Raylib");
+    SearchAndSetResourceDir("resources");
+
+    // Not looking straight down anymore, so "up" isn't parallel to the view direction
+    Camera camera = { 0 };
+    camera.position   = (Vector3){ 0.0f, 2.0f, 10.0f };
+    camera.target     = (Vector3){ 50.0f, 0.0f, 50.0f };
+    camera.up         = (Vector3){ 0.0f, 1.0f, 0.0f };
+    camera.fovy       = 45.0f;
+    camera.projection = CAMERA_PERSPECTIVE;
+
+    Texture wabbit = LoadTexture("wabbit_alpha.png");
+    Model floor = LoadModel("../assets/ground.glb");
+    Vector3 floor_pos = { 0.0f, 0.0f, 0.0f };
+
+    const float turnSpeed = 90.0f * DEG2RAD;   // radians per second
+
+    while (!WindowShouldClose())
+    {
+        float dt = GetFrameTime();
+
+        // +1 for left, -1 for right, 0 for neither/both
+        float turn = 0.0f;
+        if (IsKeyDown(KEY_LEFT))  turn += 1.0f;
+        if (IsKeyDown(KEY_RIGHT)) turn -= 1.0f;
+
+        if (turn != 0.0f)
+        {
+            // View direction relative to the camera, not the world origin
+            Vector3 forward = Vector3Subtract(camera.target, camera.position);
+
+            // Rotate around the camera's up axis (yaw)
+            forward = Vector3RotateByAxisAngle(forward, camera.up, turn * turnSpeed * dt);
+
+            // Move the target back out from the camera position
+            camera.target = Vector3Add(camera.position, forward);
+        }
+
+        BeginDrawing();
+        ClearBackground(BLACK);
+        DrawText("Hello Raylib", 200, 200, 20, WHITE);
+
+        BeginMode3D(camera);
+        DrawModel(floor, floor_pos, 1.0f, WHITE);
+        EndMode3D();
+
+        EndDrawing();
+    }
+
+    UnloadTexture(wabbit);
+    UnloadModel(floor);
+    CloseWindow();
+    return 0;
 }
-
-int main ()
-{    
-	Camera camera = { 0 };
-	camera.position = (Vector3){ 50.0f, 50.0f, 50.0f }; // Camera position
-	camera.target = (Vector3){ 0.0f, 12.0f, 0.0f };     // Camera looking at point
-	camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };          // Camera up vector (rotation towards target)
-	camera.fovy = 45.0f;                                // Camera field-of-view Y
-	camera.projection = CAMERA_PERSPECTIVE;             // Camera mode type
-
-
-	// Tell the window to use vsync and work on high DPI displays
-	SetConfigFlags(FLAG_VSYNC_HINT | FLAG_WINDOW_HIGHDPI);
-
-	// Create the window and OpenGL context
-	InitWindow(800, 600, "Hello Raylib");
-
-	// Utility function from resource_dir.h to find the resources folder and set it as the current working directory so we can load from it
-	SearchAndSetResourceDir("resources");
-
-	// Load a texture from the resources directory
-	Texture wabbit = LoadTexture("wabbit_alpha.png");
-
-	Model floor = LoadModel("../assets/ground.glb");
-
-	Vector3 floor_pos = { 0.0f, 0.0f, 0.0f };
-
-	
-	int counter = 0;
-	// game loop
-	while (!WindowShouldClose())		// run the loop until the user presses ESCAPE or presses the Close button on the window
-	{
-		if (IsKeyDown(KEY_RIGHT)) {
-			double transformation_mat[3][3] = {{cos(20.0*(PI/180.0)), 0.0, sin(20.0*(PI/180.0))},{0.0,1.0,0.0},{-sin(20.0*(PI/180.0)),0.0,cos(20.0*(PI/180.0))}};
-			printf("i am printing a %d\n",transformation_mat[0][0]);
-			printf("atnoehusantoehusnth%d\n",counter++);
-			camera.target = transformVector3(camera.target,transformation_mat);
-		}
-		// drawing
-		BeginDrawing();
-
-		// Setup the back buffer for drawing (clear color and depth buffers)
-		ClearBackground(BLACK);
-
-		// draw some text using the default font
-		DrawText("Hello Raylib", 200,200,20,WHITE);
-
-		BeginMode3D(camera);
-		
-		DrawModel(floor, floor_pos, 1.0f, WHITE);
-
-		EndMode3D();
-		
-		// end the frame and get ready for the next one  (display frame, poll input, etc...)
-		EndDrawing();
-
-		
-	}
-
-	// cleanup
-	// unload our texture so it can be cleaned up
-	UnloadTexture(wabbit);
-
-	// destroy the window and cleanup the OpenGL context
-	CloseWindow();
-	return 0;
-}
-
