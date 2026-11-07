@@ -50,7 +50,7 @@ int main ()
 	// game loop
 	while (!WindowShouldClose())		// run the loop until the user presses ESCAPE or presses the Close button on the window
 	{
-		if (IsKeyDown(KEY_RIGHT)) {
+		if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT)) {
 			double transformation_mat[3][3] = {{cos(20.0*(PI/180.0)), 0.0, sin(20.0*(PI/180.0))},{0.0,1.0,0.0},{-sin(20.0*(PI/180.0)),0.0,cos(20.0*(PI/180.0))}};
 			printf("%d",transformation_mat[0][0]);
 			camera.target = transformVector3(camera.target,transformation_mat);
