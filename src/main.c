@@ -8,17 +8,26 @@ by Jeffery Myers is marked with CC0 1.0. To view a copy of this license, visit h
 */
 
 #include "raylib.h"
+#include "math.h"
 
 #include "resource_dir.h"	// utility header for SearchAndSetResourceDir
+#include <math.h>
+#include <stdio.h>
+
+Vector3 transformVector3(Vector3 vec, double mat[3][3]) 
+{
+	Vector3 outputVector = (Vector3) {vec.x*mat[0][0] + vec.y*mat[0][1] + vec.z*mat[0][2], vec.x*mat[1][0] + vec.y*mat[1][1] + vec.z*mat[1][2],vec.x*mat[2][0] + vec.y*mat[2][1] + vec.z*mat[2][2]};
+	return outputVector;
+}
 
 int main ()
 {    
 	Camera camera = { 0 };
-    camera.position = (Vector3){ 50.0f, 50.0f, 50.0f }; // Camera position
-    camera.target = (Vector3){ 0.0f, 12.0f, 0.0f };     // Camera looking at point
-    camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };          // Camera up vector (rotation towards target)
-    camera.fovy = 45.0f;                                // Camera field-of-view Y
-    camera.projection = CAMERA_PERSPECTIVE;             // Camera mode type
+	camera.position = (Vector3){ 50.0f, 50.0f, 50.0f }; // Camera position
+	camera.target = (Vector3){ 0.0f, 12.0f, 0.0f };     // Camera looking at point
+	camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };          // Camera up vector (rotation towards target)
+	camera.fovy = 45.0f;                                // Camera field-of-view Y
+	camera.projection = CAMERA_PERSPECTIVE;             // Camera mode type
 
 
 	// Tell the window to use vsync and work on high DPI displays
@@ -36,10 +45,16 @@ int main ()
 	Model floor = LoadModel("../assets/ground.glb");
 
 	Vector3 floor_pos = { 0.0f, 0.0f, 0.0f };
+
 	
 	// game loop
 	while (!WindowShouldClose())		// run the loop until the user presses ESCAPE or presses the Close button on the window
 	{
+		if (IsKeyDown(KEY_RIGHT)) {
+			double transformation_mat[3][3] = {{cos(20.0*(PI/180.0)), 0.0, sin(20.0*(PI/180.0))},{0.0,1.0,0.0},{-sin(20.0*(PI/180.0)),0.0,cos(20.0*(PI/180.0))}};
+			printf("%d",transformation_mat[0][0]);
+			camera.target = transformVector3(camera.target,transformation_mat);
+		}
 		// drawing
 		BeginDrawing();
 
@@ -69,3 +84,4 @@ int main ()
 	CloseWindow();
 	return 0;
 }
+
