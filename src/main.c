@@ -10,15 +10,12 @@ by Jeffery Myers is marked with CC0 1.0. To view a copy of this license, visit h
 #include "raylib.h"
 #include "raymath.h"
 #include "resource_dir.h"
-<<<<<<< HEAD
 #include <stdio.h>
 #include <stdlib.h>
 
 enum DIMENSION {TWO= 2, THREE= 3};
-=======
 #define RLIGHTS_IMPLEMENTATION
 #include "rlights.h"
->>>>>>> e2afa88 (Updates)
 
 int main(void)
 {
@@ -108,22 +105,17 @@ int main(void)
             camera.target   = Vector3Add(camera.target, step);
         }
 
-<<<<<<< HEAD
-		if (IsKeyPressed(KEY_E)) {
-			if (currentDimension == THREE) {
-				currentDimension = TWO;
-			} else {
-				currentDimension = THREE;
-			}
+	if (IsKeyPressed(KEY_E)) {
+		if (currentDimension == THREE) {
+			currentDimension = TWO;
+		} else {
+			currentDimension = THREE;
 		}
+	}
 
-        BeginDrawing();
-        ClearBackground(BLACK);
-=======
         // Keep the light on the camera and push the new values to the shader
         //lights[0].position = camera.position;
         UpdateLightValues(shader, lights[0]);
->>>>>>> e2afa88 (Updates)
 
         // The shader needs the camera position for specular highlights
         SetShaderValue(shader, shader.locs[SHADER_LOC_VECTOR_VIEW],
