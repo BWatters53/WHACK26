@@ -31,10 +31,17 @@ void main()
     fragNormal   = normalize(vec3(matNormal * vec4(vertexNormal, 1.0)));
 
     if (doHyperbolic != 0){
-        vec3 cameraVertexDist = vec3(vertexPosition.x - cameraPos.x, vertexPosition.y - cameraPos.y, vertexPosition.z - cameraPos.z);
+        vec4 globalVertexPosition = matModel * vec4(vertexPosition, 1.0);
+        vec3 cameraVertexDist = vec3(globalVertexPosition.x - cameraPos.x, globalVertexPosition.y - cameraPos.y, globalVertexPosition.z - cameraPos.z);
         float cameraVertexDistSqrd = cameraVertexDist.x * cameraVertexDist.x + cameraVertexDist.y * cameraVertexDist.y + cameraVertexDist.z * cameraVertexDist.z;
-        float hyperbolicMultiplier = (1/cameraVertexDistSqrd) * pontiDiskRadSqrd;
-        mat4 scalingMatrix = mat4(hyperbolicMultiplier);
+        float hyperbolicMultiplier = (1.0f/cameraVertexDistSqrd) * pontiDiskRadSqrd;
+        mat4 scalingMatrix = mat4(
+            hyperbolicMultiplier, 0.0,      0.0,      0.0,  // Column 0
+            0.0,      hyperbolicMultiplier, 0.0,      0.0,  
+            0.0,      0.0,      hyperbolicMultiplier, 0.0,  
+            0.0,      0.0,      0.0,      1.0             
+        );
+
 
         mat4 stretch = mat4(
             cameraVertexDist.x, 0.0,      0.0,      0.0,  // Column 0

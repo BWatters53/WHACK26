@@ -61,7 +61,7 @@ int main(void)
     SearchAndSetResourceDir("src/resources");
 
 	// Dimensions Init
-	char dimensions[4][11] = {"2D", "3D", "Hyperbolic", "4D?"};
+	char dimensions[3][11] = {"2D", "3D", "Hyperbolic"};
 
     const float cameraHeight = 1.5f;
     Camera camera = { 0 };
