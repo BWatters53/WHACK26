@@ -14,9 +14,15 @@ by Jeffery Myers is marked with CC0 1.0. To view a copy of this license, visit h
 #include <stdlib.h>
 #include <string.h>
 #include "float.h"
+#include "rlgl.h"
 
+enum DIMENSION {TWO = 2, THREE = 3};
 #define RLIGHTS_IMPLEMENTATION
 #include "rlights.h"
+
+// Set to 1 to keep the point light on the camera (fog and lighting then agree),
+// 0 to leave it fixed in the world at its starting position.
+#define LIGHT_FOLLOWS_CAMERA 1
 
 RayCollision GetRayCollisionModel(Ray ray, Model model, Vector3 position)
 {
@@ -51,14 +57,14 @@ int main(void)
 {
     SetConfigFlags(FLAG_VSYNC_HINT | FLAG_WINDOW_HIGHDPI);
     InitWindow(1000, 800, "Hello Raylib");
-    SearchAndSetResourceDir("resources");
+    SearchAndSetResourceDir("src/resources");
 
 	// Dimensions Init
 	char dimensions[4][11] = {"2D", "3D", "Hyperbolic", "4D?"};
 
     const float cameraHeight = 1.5f;
     Camera camera = { 0 };
-    camera.position   = (Vector3){ 0.0f, cameraHeight, 10.0f };
+    camera.position   = (Vector3){ 0.0f, 2.0f, 10.0f };
     camera.target     = (Vector3){ 50.0f, 2.0f, 50.0f };
     camera.up         = (Vector3){ 0.0f, 1.0f, 0.0f };
     camera.fovy       = 45.0f;
@@ -68,19 +74,33 @@ int main(void)
     Shader shader = LoadShader("shaders/lighting.vs", "shaders/lighting.fs");
     shader.locs[SHADER_LOC_VECTOR_VIEW] = GetShaderLocation(shader, "viewPos");
 
+    if (shader.id != 0 ) {
+        printf("ShaderID:%d",shader.id);
+        printf("shader id = %u, default id = %u\n", shader.id, rlGetShaderIdDefault());
+    }
+
     // The shader divides this by 10 internally; lower it for darker distant areas
     int ambientLoc = GetShaderLocation(shader, "ambient");
     SetShaderValue(shader, ambientLoc, (float[4]){ 0.0f, 0.0f, 0.0f, 1.0f }, SHADER_UNIFORM_VEC4);
 
-    // Point light that follows the camera
-    Light lights[MAX_LIGHTS] = { 0 };
-    lights[0] = CreateLight(LIGHT_POINT, (Vector3){25.0f,25.0f,25.0f}, Vector3Zero(), WHITE, shader);
+    float fadeDistance  = 80.0f;   // units until fully dark
+    float minBrightness = 0.05f;   // 0.0 = pure black at the limit
 
-    Model floor = LoadModel("../assets/groundOnly.glb");
+    int fadeDistanceLoc  = GetShaderLocation(shader, "fadeDistance");
+    int minBrightnessLoc = GetShaderLocation(shader, "minBrightness");
+
+    SetShaderValue(shader, fadeDistanceLoc,  &fadeDistance,  SHADER_UNIFORM_FLOAT);
+    SetShaderValue(shader, minBrightnessLoc, &minBrightness, SHADER_UNIFORM_FLOAT);
+
+    // Point light
+    Light lights[MAX_LIGHTS] = { 0 };
+    lights[0] = CreateLight(LIGHT_POINT, (Vector3){ 25.0f, 25.0f, 25.0f }, Vector3Zero(), WHITE, shader);
+
+    Model floor = LoadModel("../../assets/ground.glb");
     Vector3 floor_pos = { 0.0f, -30.0f, 0.0f };
 
-    Model map_objects = LoadModel("../assets/stuffOnGround.glb");
-    Vector3 map_objects_pos = { 0.0f, -30.0f, 0.0f };
+    Model red_cube = LoadModel("../../assets/cabin.glb");
+    Vector3 red_cube_pos = { 0.0f, 10.0f, 0.0f };
 
 	// 2D Variable Init
 	int widthOf2D = (int) GetScreenHeight() / 50;
@@ -89,10 +109,10 @@ int main(void)
     // DrawModel uses each material's own shader, NOT the one from BeginShaderMode,
     // so the lighting shader has to be assigned to every material on every model.
     for (int i = 0; i < floor.materialCount; i++)    floor.materials[i].shader    = shader;
-    for (int i = 0; i < map_objects.materialCount; i++) map_objects.materials[i].shader = shader;
+    for (int i = 0; i < red_cube.materialCount; i++) red_cube.materials[i].shader = shader;
 
     const float turnSpeed = 90.0f * DEG2RAD;   // radians per second
-    const float moveSpeed = 20.0f;              // world units per second
+    const float moveSpeed = 20.0f;             // world units per second
 
 	int currentDimension = 1;
 
@@ -115,6 +135,7 @@ int main(void)
 
             camera.target = Vector3Add(camera.position, forward);
         }
+
         // Tilt: +1 for up, -1 for down
         float tilt = 0.0f;
         if (IsKeyDown(KEY_S)) tilt += 1.0f;
@@ -127,7 +148,6 @@ int main(void)
             forward = Vector3RotateByAxisAngle(forward, rotationAxis, tilt * turnSpeed * dt);
             camera.target = Vector3Add(camera.position, forward);
         }
-
 
         // Move: +1 forward, -1 backward
         float move = 0.0f;
@@ -159,6 +179,8 @@ int main(void)
 		}
 	}
 
+        SetShaderValue(shader, fadeDistanceLoc, &fadeDistance, SHADER_UNIFORM_FLOAT);
+
         // Keep the camera's viewing direction
         Vector3 targetOffset = Vector3Subtract(
             camera.target,
@@ -175,7 +197,7 @@ int main(void)
 
         if (collision.hit)
         {
-            const float playerHeight = cameraHeight;
+            const float playerHeight = 2.0f;
 
             float desiredHeight = collision.point.y + playerHeight;
 
@@ -189,12 +211,14 @@ int main(void)
             );
         }
 
+#if LIGHT_FOLLOWS_CAMERA
+        lights[0].position = camera.position;
+#endif
 
-        // Keep the light on the camera and push the new values to the shader
-        //lights[0].position = camera.position;
+        // Push the light values to the shader
         UpdateLightValues(shader, lights[0]);
 
-        // The shader needs the camera position for specular highlights
+        // The shader needs the camera position for specular highlights AND fog distance
         SetShaderValue(shader, shader.locs[SHADER_LOC_VECTOR_VIEW],
                        &camera.position.x, SHADER_UNIFORM_VEC3);
 		if (strcmp(dimensions[currentDimension], "2D") == 0) {
@@ -206,7 +230,7 @@ int main(void)
 		
 		
         DrawModel(floor, floor_pos, 1.0f, WHITE);
-        DrawModel(map_objects, map_objects_pos, 1.0f, RED);
+        DrawModel(red_cube, red_cube_pos, 1.0f, RED);
 
         // Light marker (hidden while the light sits exactly on the camera)
         for (int i = 0; i < MAX_LIGHTS; i++)
@@ -242,7 +266,7 @@ int main(void)
     }
 
     UnloadModel(floor);
-    UnloadModel(map_objects);
+    UnloadModel(red_cube);
     UnloadShader(shader);
     CloseWindow();
     return 0;
