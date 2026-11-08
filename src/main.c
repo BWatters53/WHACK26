@@ -57,7 +57,7 @@ int main(void)
     const int zero = 0;
     const int one = 1;
     SetConfigFlags(FLAG_VSYNC_HINT | FLAG_WINDOW_HIGHDPI);
-    InitWindow(1000, 800, "Hello Raylib");
+    InitWindow(1000, 800, "DEBBelobers");
     SearchAndSetResourceDir("src/resources");
 
 	// Dimensions Init
