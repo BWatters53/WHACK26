@@ -76,7 +76,6 @@ int main(void)
 
     Model floor = LoadModel("../assets/ground.glb");
     Vector3 floor_pos = { 0.0f, -30.0f, 0.0f };
-    Vector3 floor_pos = { 0.0f, -30.0f, 0.0f };
 
     Model red_cube = LoadModel("../assets/tree2.glb");
     Vector3 red_cube_pos = { 0.0f, 1.0f, 0.0f };
