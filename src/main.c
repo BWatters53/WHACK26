@@ -54,6 +54,12 @@ RayCollision GetRayCollisionModel(Ray ray, Model model, Vector3 position)
     return closestCollision;
 }
 
+// Just For Testing Purposes (-:
+int printLocation(Vector3 position) {
+    printf("Camera Position: x: %f, y: %f, z: %f\n", position.x, position.y, position.z);
+    return 0;
+}
+
 int main(void)
 {
     bool isHyperbolic = false;
@@ -100,11 +106,22 @@ int main(void)
     Light lights[MAX_LIGHTS] = { 0 };
     lights[0] = CreateLight(LIGHT_POINT, (Vector3){ 25.0f, 25.0f, 25.0f }, Vector3Zero(), WHITE, shader);
 
+    // Model Inits // 
     Model floor = LoadModel("../../assets/ground.glb");
     Vector3 floor_pos = { 0.0f, -30.0f, 0.0f };
 
-    Model red_cube = LoadModel("../../assets/cabin.glb");
-    Vector3 red_cube_pos = { 0.0f, 10.0f, 0.0f };
+    // Demo Shapes //
+    Model red_cube = LoadModel("../../assets/redCube.glb");
+    Vector3 red_cube_pos = { 30.0f, -2.0f, -15.0f };
+
+    Model green_cone = LoadModel("../../assets/greenCone.glb");
+    Vector3 green_cone_pos = {35.0f, -2.0f, -11.0f};
+
+    Model blue_cylinder = LoadModel("../../assets/blueCylinder.glb");
+    Vector3 blue_cylinder_pos = {40.0f, -2.0f, -7.0f};
+
+    Model pink_sphere = LoadModel("../../assets/pinkSphere.glb");
+    Vector3 pink_sphere_pos = {45.0f, -2.0f, -3.0f};
 
 	// 2D Variable Init
 	int widthOf2D = (int) GetScreenHeight() / 50;
@@ -142,6 +159,10 @@ int main(void)
 
         // Tilt: +1 for up, -1 for down
         float tilt = 0.0f;
+        if (!(cmpstr(dimensions[currentDimension], "2D") == 0)) { //Can't Rotate In 3D Space When In 2D Mode.
+            if (IsKeyDown(KEY_S)) tilt += 1.0f;
+            if (IsKeyDown(KEY_W)) tilt -= 1.0f;
+        }
         if (IsKeyDown(KEY_S)) tilt += 1.0f;
         if (IsKeyDown(KEY_W)) tilt -= 1.0f;
 
@@ -185,7 +206,10 @@ int main(void)
                 camera.projection = CAMERA_PERSPECTIVE;
             }
         }
-
+        /*if (IsKeyPressed(KEY_R)){
+            printLocation(camera.position);
+        */// Implemented for testing purposes
+        }
         SetShaderValue(shader, fadeDistanceLoc, &fadeDistance, SHADER_UNIFORM_FLOAT);
 
         // Keep the camera's viewing direction
@@ -258,6 +282,11 @@ int main(void)
 		
         DrawModel(floor, floor_pos, 1.0f, WHITE);
         DrawModel(red_cube, red_cube_pos, 1.0f, RED);
+        DrawModel(pink_sphere, pink_sphere_pos, 1.0f, PINK);
+        DrawModel(blue_cylinder, blue_cylinder_pos, 1.0f, BLUE);
+        DrawModel(green_cone, green_cone_pos, 1.0f, GREEN);
+
+
 
         // Light marker (hidden while the light sits exactly on the camera)
         for (int i = 0; i < MAX_LIGHTS; i++)
