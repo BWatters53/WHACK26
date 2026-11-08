@@ -105,7 +105,7 @@ int main(void)
     Light lights[MAX_LIGHTS] = { 0 };
     lights[0] = CreateLight(LIGHT_POINT, (Vector3){ 25.0f, 25.0f, 25.0f }, Vector3Zero(), WHITE, shader);
 
-    Model floor = LoadModel("../../assets/groundOnly.glb");
+    Model floor = LoadModel("../../assets/groundFlat.glb");
     Vector3 floor_pos = { 0.0f, -30.0f, 0.0f };
 
     Model floor_objects = LoadModel("../../assets/stuffOnGround.glb");
@@ -220,7 +220,7 @@ int main(void)
 
         if (collision.hit && !isHyperbolic)
         {
-            const float playerHeight = 2.0f;
+            const float playerHeight = 3.0f;
 
             float desiredHeight = collision.point.y + playerHeight;
 
@@ -261,7 +261,7 @@ int main(void)
 		
 		
         DrawModel(floor, floor_pos, 1.0f, WHITE);
-        DrawModel(floor_objects, floor_objects_pos, 1.0f, RED);
+        //DrawModel(floor_objects, floor_objects_pos, 1.0f, RED);
 
         // Light marker (hidden while the light sits exactly on the camera)
         for (int i = 0; i < MAX_LIGHTS; i++)
