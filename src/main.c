@@ -12,9 +12,39 @@ by Jeffery Myers is marked with CC0 1.0. To view a copy of this license, visit h
 #include "resource_dir.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include "float.h"
 
 #define RLIGHTS_IMPLEMENTATION
 #include "rlights.h"
+
+RayCollision GetRayCollisionModel(Ray ray, Model model, Vector3 position)
+{
+    RayCollision closestCollision = { 0 };
+    closestCollision.hit = false;
+    closestCollision.distance = FLT_MAX;
+
+    Matrix translation = MatrixTranslate(
+        position.x, position.y, position.z
+    );
+
+    Matrix transform = MatrixMultiply(translation, model.transform);
+
+    for (int i = 0; i < model.meshCount; i++)
+    {
+        RayCollision hit = GetRayCollisionMesh(
+            ray,
+            model.meshes[i],
+            transform
+        );
+
+        if (hit.hit && hit.distance < closestCollision.distance)
+        {
+            closestCollision = hit;
+        }
+    }
+
+    return closestCollision;
+}
 
 int main(void)
 {
@@ -46,6 +76,7 @@ int main(void)
 
     Model floor = LoadModel("../assets/ground.glb");
     Vector3 floor_pos = { 0.0f, -30.0f, 0.0f };
+    Vector3 floor_pos = { 0.0f, -30.0f, 0.0f };
 
     Model red_cube = LoadModel("../assets/tree2.glb");
     Vector3 red_cube_pos = { 0.0f, 1.0f, 0.0f };
@@ -55,8 +86,13 @@ int main(void)
     for (int i = 0; i < floor.materialCount; i++)    floor.materials[i].shader    = shader;
     for (int i = 0; i < red_cube.materialCount; i++) red_cube.materials[i].shader = shader;
 
+    // DrawModel uses each material's own shader, NOT the one from BeginShaderMode,
+    // so the lighting shader has to be assigned to every material on every model.
+    for (int i = 0; i < floor.materialCount; i++)    floor.materials[i].shader    = shader;
+    for (int i = 0; i < red_cube.materialCount; i++) red_cube.materials[i].shader = shader;
+
     const float turnSpeed = 90.0f * DEG2RAD;   // radians per second
-    const float moveSpeed = 30.0f;              // world units per second
+    const float moveSpeed = 20.0f;              // world units per second
 
 	int currentDimension = 0;
 
@@ -100,18 +136,53 @@ int main(void)
 
         if (move != 0.0f)
         {
-            Vector3 step = Vector3Normalize(Vector3Subtract((Vector3){camera.target.x,0.0f,camera.target.z}, camera.position));
+            Vector3 forward = {
+                camera.target.x - camera.position.x,
+                0.0f,
+                camera.target.z - camera.position.z
+            };
+
+            Vector3 step = Vector3Normalize(forward);
             step = Vector3Scale(step, moveSpeed * move * dt);
 
             camera.position = Vector3Add(camera.position, step);
-            camera.target   = Vector3Add(camera.target, step);
+            camera.target = Vector3Add(camera.target, step);
         }
 
 	if (IsKeyPressed(KEY_E)) {
-		printf("%d", currentDimension);
 		currentDimension = (currentDimension + 1)%(sizeof(dimensions)/sizeof(dimensions[0]));
-		printf("%d %s", currentDimension, dimensions[currentDimension]);
 	}
+
+        // Keep the camera's viewing direction
+        Vector3 targetOffset = Vector3Subtract(
+            camera.target,
+            camera.position
+        );
+
+        // Cast ray downwards
+        Ray ray = {
+            camera.position,
+            (Vector3){ 0.0f, -1.0f, 0.0f }
+        };
+
+        RayCollision collision = GetRayCollisionModel(ray, floor, floor_pos);
+
+        if (collision.hit)
+        {
+            const float playerHeight = 2.0f;
+
+            float desiredHeight = collision.point.y + playerHeight;
+
+            // Move camera to maintain distance from terrain
+            camera.position.y = desiredHeight;
+
+            // Preserve viewing direction
+            camera.target = Vector3Add(
+                camera.position,
+                targetOffset
+            );
+        }
+
 
         // Keep the light on the camera and push the new values to the shader
         //lights[0].position = camera.position;
