@@ -218,7 +218,7 @@ int main(void)
 
         RayCollision collision = GetRayCollisionModel(ray, floor, floor_pos);
 
-        if (collision.hit)
+        if (collision.hit && !isHyperbolic)
         {
             const float playerHeight = 2.0f;
 

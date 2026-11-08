@@ -32,8 +32,10 @@ void main()
 
     if (doHyperbolic != 0){
         vec4 globalVertexPosition = matModel * vec4(vertexPosition, 1.0);
-        vec3 cameraVertexDist = vec3(globalVertexPosition.x - cameraPos.x, globalVertexPosition.y - cameraPos.y, globalVertexPosition.z - cameraPos.z);
+        vec3 cameraVertexDist = vec3(cameraPos.x - globalVertexPosition.x, cameraPos.y - globalVertexPosition.y, cameraPos.z - globalVertexPosition.z);
         float cameraVertexDistSqrd = cameraVertexDist.x * cameraVertexDist.x + cameraVertexDist.y * cameraVertexDist.y + cameraVertexDist.z * cameraVertexDist.z;
+        if (cameraVertexDistSqrd <= 0.1f) { cameraVertexDistSqrd == 0.1f; }
+        
         float hyperbolicMultiplier = (1.0f/cameraVertexDistSqrd) * pontiDiskRadSqrd;
         mat4 scalingMatrix = mat4(
             hyperbolicMultiplier, 0.0,      0.0,      0.0,  // Column 0
@@ -43,13 +45,13 @@ void main()
         );
 
 
-        mat4 stretch = mat4(
-            cameraVertexDist.x, 0.0,      0.0,      0.0,  // Column 0
-            0.0,      cameraVertexDist.y, 0.0,      0.0,  
-            0.0,      0.0,      cameraVertexDist.z, 0.0,  
-            0.0,      0.0,      0.0,      1.0             
-        );
-        scalingMatrix = stretch * scalingMatrix;
+        //mat4 stretch = mat4(
+            //cameraVertexDist.x, 0.0,      0.0,      0.0,  // Column 0
+            //0.0,      cameraVertexDist.y, 0.0,      0.0,  
+            //0.0,      0.0,      cameraVertexDist.z, 0.0,  
+           // 0.0,      0.0,      0.0,      1.0             
+        //);
+        //scalingMatrix = stretch * scalingMatrix;
 
         gl_Position = mvp * inverse(matModel) * scalingMatrix * vec4(-cameraVertexDist, 1.0);
     }
