@@ -1,12 +1,3 @@
-/*
-Raylib example file.
-This is an example main file for a simple raylib project.
-Use this as a starting point or replace it with your code.
-
-by Jeffery Myers is marked with CC0 1.0. To view a copy of this license, visit https://creativecommons.org/publicdomain/zero/1.0/
-
-*/
-
 #include "raylib.h"
 #include "raymath.h"
 #include "resource_dir.h"
@@ -58,6 +49,8 @@ int main(void)
 {
     bool isHyperbolic = false;
     const float MAP_BOUNDS = 1000.0f;
+    const int zero = 0;
+    const int one = 1;
     SetConfigFlags(FLAG_VSYNC_HINT | FLAG_WINDOW_HIGHDPI);
     InitWindow(1000, 800, "Hello Raylib");
     SearchAndSetResourceDir("src/resources");
@@ -96,15 +89,22 @@ int main(void)
     SetShaderValue(shader, fadeDistanceLoc,  &fadeDistance,  SHADER_UNIFORM_FLOAT);
     SetShaderValue(shader, minBrightnessLoc, &minBrightness, SHADER_UNIFORM_FLOAT);
 
+    int cameraPosUniform = GetShaderLocation(shader, "cameraPos");
+    int doHyperbolic = GetShaderLocation(shader, "doHyperbolic");
+    int pontiDiskRad = GetShaderLocation(shader, "pontiDiskRadSqrd");
+    int pontiDiskRadius = MAP_BOUNDS * MAP_BOUNDS;
+    SetShaderValue(shader, doHyperbolic, &zero, SHADER_UNIFORM_INT);
+    SetShaderValue(shader, pontiDiskRad, &pontiDiskRadius, SHADER_UNIFORM_FLOAT);
+
     // Point light
     Light lights[MAX_LIGHTS] = { 0 };
     lights[0] = CreateLight(LIGHT_POINT, (Vector3){ 25.0f, 25.0f, 25.0f }, Vector3Zero(), WHITE, shader);
 
-    Model floor = LoadModel("../../assets/ground.glb");
+    Model floor = LoadModel("../../assets/groundOnly.glb");
     Vector3 floor_pos = { 0.0f, -30.0f, 0.0f };
 
-    Model red_cube = LoadModel("../../assets/cabin.glb");
-    Vector3 red_cube_pos = { 0.0f, 10.0f, 0.0f };
+    Model floor_objects = LoadModel("../../assets/stuffOnGround.glb");
+    Vector3 floor_objects_pos = { 0.0f, -30.0f, 0.0f };
 
 	// 2D Variable Init
 	int widthOf2D = (int) GetScreenHeight() / 50;
@@ -113,7 +113,7 @@ int main(void)
     // DrawModel uses each material's own shader, NOT the one from BeginShaderMode,
     // so the lighting shader has to be assigned to every material on every model.
     for (int i = 0; i < floor.materialCount; i++)    floor.materials[i].shader    = shader;
-    for (int i = 0; i < red_cube.materialCount; i++) red_cube.materials[i].shader = shader;
+    for (int i = 0; i < floor_objects.materialCount; i++) floor_objects.materials[i].shader = shader;
 
     const float turnSpeed = 90.0f * DEG2RAD;   // radians per second
     const float moveSpeed = 20.0f;             // world units per second
@@ -182,7 +182,6 @@ int main(void)
                 ClearBackground(SKYBLUE);
             } else if (strcmp(dimensions[currentDimension], "Hyperbolic") == 0){
                 isHyperbolic = true;
-                camera.projection = CAMERA_PERSPECTIVE;
             }
         }
 
@@ -218,27 +217,17 @@ int main(void)
             );
         }
 
-#if LIGHT_FOLLOWS_CAMERA
-        lights[0].position = camera.position;
-#endif
+        #if LIGHT_FOLLOWS_CAMERA
+                lights[0].position = camera.position;
+        #endif
+
         if (isHyperbolic){
-            // rlMatrixMode(RL_MODELVIEW);
-            // rlPushMatrix();
-
-            // float x = camera.position.x;
-            // float y = camera.position.x;
-            // float z = camera.position.x;
-
-            // float magXSqrd = x * x + y * y + z * z;
-            // float inverse = 1/magXSqrd;
-            // rlScalef(inverse,  inverse, inverse);   // We just multiply every element by this number
-
-            // float worldRadiusSqrd = MAP_BOUNDS * MAP_BOUNDS;
-            // rlScalef(worldRadiusSqrd, worldRadiusSqrd, worldRadiusSqrd);    // This is the radius of our poincare disk
-
-            // rlScalef(x, y, z);
-
-            
+            SetShaderValue(shader, doHyperbolic, &one, SHADER_UNIFORM_INT);    // C-style bool
+            SetShaderValue(shader, cameraPosUniform, (float[4]){ camera.position.x, camera.position.y, camera.position.z, 0.0f }, SHADER_UNIFORM_VEC4);  // Set uniform
+        }
+        else{
+            camera.projection = CAMERA_PERSPECTIVE;
+            SetShaderValue(shader, doHyperbolic, &zero, SHADER_UNIFORM_INT);    // C-style bool
         }
 
 
@@ -257,7 +246,7 @@ int main(void)
 		
 		
         DrawModel(floor, floor_pos, 1.0f, WHITE);
-        DrawModel(red_cube, red_cube_pos, 1.0f, RED);
+        DrawModel(floor_objects, floor_objects_pos, 1.0f, RED);
 
         // Light marker (hidden while the light sits exactly on the camera)
         for (int i = 0; i < MAX_LIGHTS; i++)
@@ -295,7 +284,7 @@ int main(void)
     }
 
     UnloadModel(floor);
-    UnloadModel(red_cube);
+    UnloadModel(floor_objects);
     UnloadShader(shader);
     CloseWindow();
     return 0;
