@@ -14,6 +14,7 @@ by Jeffery Myers is marked with CC0 1.0. To view a copy of this license, visit h
 #include <stdlib.h>
 #include <string.h>
 #include "float.h"
+#include "rlgl.h"
 
 #define RLIGHTS_IMPLEMENTATION
 #include "rlights.h"
@@ -49,6 +50,8 @@ RayCollision GetRayCollisionModel(Ray ray, Model model, Vector3 position)
 
 int main(void)
 {
+    bool isHyperbolic = false;
+    const float MAP_BOUNDS = 1000.0f;
     SetConfigFlags(FLAG_VSYNC_HINT | FLAG_WINDOW_HIGHDPI);
     InitWindow(1000, 800, "Hello Raylib");
     SearchAndSetResourceDir("resources");
@@ -63,6 +66,7 @@ int main(void)
     camera.up         = (Vector3){ 0.0f, 1.0f, 0.0f };
     camera.fovy       = 45.0f;
     camera.projection = CAMERA_PERSPECTIVE;
+    Matrix defaultViewMat = GetCameraMatrix(camera);
 
     // Load the lighting shader (paths are relative to the resources directory)
     Shader shader = LoadShader("shaders/lighting.vs", "shaders/lighting.fs");
@@ -149,15 +153,18 @@ int main(void)
             camera.target = Vector3Add(camera.target, step);
         }
 
-	if (IsKeyPressed(KEY_E)) {
-		currentDimension = (currentDimension + 1)%(sizeof(dimensions)/sizeof(dimensions[0]));
-		if (strcmp(dimensions[currentDimension], "3D") == 0){
-			UnloadRenderTexture(target);
-		} else if (strcmp(dimensions[currentDimension], "2D") == 0) {
-			target = LoadRenderTexture(GetScreenWidth(),GetScreenHeight());
-			ClearBackground(SKYBLUE);
-		}
-	}
+	    if (IsKeyPressed(KEY_E)) {
+            currentDimension = (currentDimension + 1)%(sizeof(dimensions)/sizeof(dimensions[0]));
+            if (strcmp(dimensions[currentDimension], "3D") == 0){
+                UnloadRenderTexture(target);
+            } else if (strcmp(dimensions[currentDimension], "2D") == 0) {
+                target = LoadRenderTexture(GetScreenWidth(),GetScreenHeight());
+                ClearBackground(SKYBLUE);
+            } else if (strcmp(dimensions[currentDimension], "Hyperbolic") == 0){
+                isHyperbolic = true;
+                camera.projection = CAMERA_PERSPECTIVE;
+            }
+        }
 
         // Keep the camera's viewing direction
         Vector3 targetOffset = Vector3Subtract(
@@ -187,6 +194,26 @@ int main(void)
                 camera.position,
                 targetOffset
             );
+        }
+
+        if (isHyperbolic){
+            // rlMatrixMode(RL_MODELVIEW);
+            // rlPushMatrix();
+
+            // float x = camera.position.x;
+            // float y = camera.position.x;
+            // float z = camera.position.x;
+
+            // float magXSqrd = x * x + y * y + z * z;
+            // float inverse = 1/magXSqrd;
+            // rlScalef(inverse,  inverse, inverse);   // We just multiply every element by this number
+
+            // float worldRadiusSqrd = MAP_BOUNDS * MAP_BOUNDS;
+            // rlScalef(worldRadiusSqrd, worldRadiusSqrd, worldRadiusSqrd);    // This is the radius of our poincare disk
+
+            // rlScalef(x, y, z);
+
+            
         }
 
 
@@ -239,7 +266,9 @@ int main(void)
 		sprintf(currentDimensionString, "%s Mode Active. Press [E] To Change", dimensions[currentDimension]);
 		DrawText(currentDimensionString,5,5,20,WHITE);
 
-
+        if (isHyperbolic){
+            rlPopMatrix();
+        }
         EndDrawing();
     }
 
