@@ -55,8 +55,9 @@ int main(void)
 	// Dimensions Init
 	char dimensions[4][11] = {"2D", "3D", "Hyperbolic", "4D?"};
 
+    const float cameraHeight = 0.5f;
     Camera camera = { 0 };
-    camera.position   = (Vector3){ 0.0f, 2.0f, 10.0f };
+    camera.position   = (Vector3){ 0.0f, cameraHeight, 10.0f };
     camera.target     = (Vector3){ 50.0f, 2.0f, 50.0f };
     camera.up         = (Vector3){ 0.0f, 1.0f, 0.0f };
     camera.fovy       = 45.0f;
@@ -74,21 +75,16 @@ int main(void)
     Light lights[MAX_LIGHTS] = { 0 };
     lights[0] = CreateLight(LIGHT_POINT, (Vector3){25.0f,25.0f,25.0f}, Vector3Zero(), WHITE, shader);
 
-    Model floor = LoadModel("../assets/ground.glb");
+    Model floor = LoadModel("../assets/groundOnly.glb");
     Vector3 floor_pos = { 0.0f, -30.0f, 0.0f };
 
-    Model red_cube = LoadModel("../assets/tree2.glb");
-    Vector3 red_cube_pos = { 0.0f, 1.0f, 0.0f };
+    Model map_objects = LoadModel("../assets/stuffOnGround.glb");
+    Vector3 map_objects_pos = { 0.0f, -30.0f, 0.0f };
 
     // DrawModel uses each material's own shader, NOT the one from BeginShaderMode,
     // so the lighting shader has to be assigned to every material on every model.
     for (int i = 0; i < floor.materialCount; i++)    floor.materials[i].shader    = shader;
-    for (int i = 0; i < red_cube.materialCount; i++) red_cube.materials[i].shader = shader;
-
-    // DrawModel uses each material's own shader, NOT the one from BeginShaderMode,
-    // so the lighting shader has to be assigned to every material on every model.
-    for (int i = 0; i < floor.materialCount; i++)    floor.materials[i].shader    = shader;
-    for (int i = 0; i < red_cube.materialCount; i++) red_cube.materials[i].shader = shader;
+    for (int i = 0; i < map_objects.materialCount; i++) map_objects.materials[i].shader = shader;
 
     const float turnSpeed = 90.0f * DEG2RAD;   // radians per second
     const float moveSpeed = 20.0f;              // world units per second
@@ -168,7 +164,7 @@ int main(void)
 
         if (collision.hit)
         {
-            const float playerHeight = 2.0f;
+            const float playerHeight = cameraHeight;
 
             float desiredHeight = collision.point.y + playerHeight;
 
@@ -197,7 +193,7 @@ int main(void)
         BeginMode3D(camera);
 
         DrawModel(floor, floor_pos, 1.0f, WHITE);
-        DrawModel(red_cube, red_cube_pos, 1.0f, RED);
+        DrawModel(map_objects, map_objects_pos, 1.0f, RED);
 
         // Light marker (hidden while the light sits exactly on the camera)
         for (int i = 0; i < MAX_LIGHTS; i++)
@@ -219,7 +215,7 @@ int main(void)
     }
 
     UnloadModel(floor);
-    UnloadModel(red_cube);
+    UnloadModel(map_objects);
     UnloadShader(shader);
     CloseWindow();
     return 0;
