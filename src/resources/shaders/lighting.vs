@@ -11,6 +11,11 @@ uniform mat4 mvp;
 uniform mat4 matModel;
 uniform mat4 matNormal;
 
+// Special uniforms needed for hyperbolic stuff (when non-hyper this is set to 0, 0, 0)
+uniform int doHyperbolic;
+uniform float pontiDiskRadSqrd;
+uniform vec4 cameraPos;
+
 // Output to fragment shader
 out vec3 fragPosition;
 out vec2 fragTexCoord;
@@ -25,5 +30,23 @@ void main()
     fragColor    = vertexColor;
     fragNormal   = normalize(vec3(matNormal * vec4(vertexNormal, 1.0)));
 
-    gl_Position = mvp * vec4(vertexPosition, 1.0);
+    if (doHyperbolic != 0){
+        vec3 cameraVertexDist = vec3(vertexPosition.x - cameraPos.x, vertexPosition.y - cameraPos.y, vertexPosition.z - cameraPos.z);
+        float cameraVertexDistSqrd = cameraVertexDist.x * cameraVertexDist.x + cameraVertexDist.y * cameraVertexDist.y + cameraVertexDist.z * cameraVertexDist.z;
+        float hyperbolicMultiplier = (1/cameraVertexDistSqrd) * pontiDiskRadSqrd;
+        mat4 scalingMatrix = mat4(hyperbolicMultiplier);
+
+        mat4 stretch = mat4(
+            cameraVertexDist.x, 0.0,      0.0,      0.0,  // Column 0
+            0.0,      cameraVertexDist.y, 0.0,      0.0,  
+            0.0,      0.0,      cameraVertexDist.z, 0.0,  
+            0.0,      0.0,      0.0,      1.0             
+        );
+        scalingMatrix = stretch * scalingMatrix;
+
+        gl_Position = mvp * scalingMatrix * vec4(cameraVertexDist, 1.0);
+    }
+    else{
+        gl_Position = mvp * vec4(vertexPosition, 1.0);
+    }
 }

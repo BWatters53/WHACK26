@@ -1,20 +1,10 @@
-/*
-Raylib example file.
-This is an example main file for a simple raylib project.
-Use this as a starting point or replace it with your code.
-
-by Jeffery Myers is marked with CC0 1.0. To view a copy of this license, visit https://creativecommons.org/publicdomain/zero/1.0/
-
-*/
-
 #include "raylib.h"
 #include "raymath.h"
 #include "resource_dir.h"
-#include <stdio.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include "float.h"
-#include "rlgl.h"
 #include "rlgl.h"
 
 enum DIMENSION {TWO = 2, THREE = 3};
@@ -63,7 +53,9 @@ int printLocation(Vector3 position) {
 int main(void)
 {
     bool isHyperbolic = false;
-    const float MAP_BOUNDS = 1000.0f;
+    const float MAP_BOUNDS = 50.0f;
+    const int zero = 0;
+    const int one = 1;
     SetConfigFlags(FLAG_VSYNC_HINT | FLAG_WINDOW_HIGHDPI);
     InitWindow(1000, 800, "Hello Raylib");
     SearchAndSetResourceDir("src/resources");
@@ -102,26 +94,22 @@ int main(void)
     SetShaderValue(shader, fadeDistanceLoc,  &fadeDistance,  SHADER_UNIFORM_FLOAT);
     SetShaderValue(shader, minBrightnessLoc, &minBrightness, SHADER_UNIFORM_FLOAT);
 
+    int cameraPosUniform = GetShaderLocation(shader, "cameraPos");
+    int doHyperbolic = GetShaderLocation(shader, "doHyperbolic");
+    float pontiDiskRad = GetShaderLocation(shader, "pontiDiskRadSqrd");
+    float pontiDiskRadius = MAP_BOUNDS * MAP_BOUNDS;
+    SetShaderValue(shader, doHyperbolic, &zero, SHADER_UNIFORM_INT);
+    SetShaderValue(shader, pontiDiskRad, &pontiDiskRadius, SHADER_UNIFORM_FLOAT);
+
     // Point light
     Light lights[MAX_LIGHTS] = { 0 };
     lights[0] = CreateLight(LIGHT_POINT, (Vector3){ 25.0f, 25.0f, 25.0f }, Vector3Zero(), WHITE, shader);
 
-    // Model Inits // 
-    Model floor = LoadModel("../../assets/ground.glb");
+    Model floor = LoadModel("../../assets/groundOnly.glb");
     Vector3 floor_pos = { 0.0f, -30.0f, 0.0f };
 
-    // Demo Shapes //
-    Model red_cube = LoadModel("../../assets/redCube.glb");
-    Vector3 red_cube_pos = { 30.0f, -2.0f, -15.0f };
-
-    Model green_cone = LoadModel("../../assets/greenCone.glb");
-    Vector3 green_cone_pos = {35.0f, -2.0f, -11.0f};
-
-    Model blue_cylinder = LoadModel("../../assets/blueCylinder.glb");
-    Vector3 blue_cylinder_pos = {40.0f, -2.0f, -7.0f};
-
-    Model pink_sphere = LoadModel("../../assets/pinkSphere.glb");
-    Vector3 pink_sphere_pos = {45.0f, -2.0f, -3.0f};
+    Model floor_objects = LoadModel("../../assets/stuffOnGround.glb");
+    Vector3 floor_objects_pos = { 0.0f, -30.0f, 0.0f };
 
 	// 2D Variable Init
 	int widthOf2D = (int) GetScreenHeight() / 50;
@@ -130,7 +118,7 @@ int main(void)
     // DrawModel uses each material's own shader, NOT the one from BeginShaderMode,
     // so the lighting shader has to be assigned to every material on every model.
     for (int i = 0; i < floor.materialCount; i++)    floor.materials[i].shader    = shader;
-    for (int i = 0; i < red_cube.materialCount; i++) red_cube.materials[i].shader = shader;
+    for (int i = 0; i < floor_objects.materialCount; i++) floor_objects.materials[i].shader = shader;
 
     const float turnSpeed = 90.0f * DEG2RAD;   // radians per second
     const float moveSpeed = 20.0f;             // world units per second
@@ -159,7 +147,7 @@ int main(void)
 
         // Tilt: +1 for up, -1 for down
         float tilt = 0.0f;
-        if (!(cmpstr(dimensions[currentDimension], "2D") == 0)) { //Can't Rotate In 3D Space When In 2D Mode.
+        if (!(strcmp(dimensions[currentDimension], "2D") == 0)) { //Can't Rotate In 3D Space When In 2D Mode.
             if (IsKeyDown(KEY_S)) tilt += 1.0f;
             if (IsKeyDown(KEY_W)) tilt -= 1.0f;
         }
@@ -198,18 +186,22 @@ int main(void)
             currentDimension = (currentDimension + 1)%(sizeof(dimensions)/sizeof(dimensions[0]));
             if (strcmp(dimensions[currentDimension], "3D") == 0){
                 UnloadRenderTexture(target);
+                isHyperbolic = false;
             } else if (strcmp(dimensions[currentDimension], "2D") == 0) {
                 target = LoadRenderTexture(GetScreenWidth(),GetScreenHeight());
                 ClearBackground(SKYBLUE);
+                isHyperbolic = false;
+
             } else if (strcmp(dimensions[currentDimension], "Hyperbolic") == 0){
                 isHyperbolic = true;
-                camera.projection = CAMERA_PERSPECTIVE;
             }
         }
-        /*if (IsKeyPressed(KEY_R)){
-            printLocation(camera.position);
-        */// Implemented for testing purposes
+
+        if (IsKeyPressed(KEY_R)) {
+            Matrix currentViewMat = GetCameraMatrix(camera);
+            printf("Player Pos: %f, %f, %f, %f \n", currentViewMat.m0, currentViewMat.m10, currentViewMat.m11, currentViewMat.m12);
         }
+
         SetShaderValue(shader, fadeDistanceLoc, &fadeDistance, SHADER_UNIFORM_FLOAT);
 
         // Keep the camera's viewing direction
@@ -242,29 +234,17 @@ int main(void)
             );
         }
 
-#if LIGHT_FOLLOWS_CAMERA
-        lights[0].position = camera.position;
-#endif
+        #if LIGHT_FOLLOWS_CAMERA
+                lights[0].position = camera.position;
+        #endif
+
         if (isHyperbolic){
-            // rlMatrixMode(RL_MODELVIEW);
-            // rlPushMatrix();
-
-            // float x = camera.position.x;
-            // float y = camera.position.x;
-            // float z = camera.position.x;
-
-            // float magXSqrd = x * x + y * y + z * z;
-            // float inverse = 1/magXSqrd;
-            // rlScalef(inverse,  inverse, inverse);   // We just multiply every element by this number
-
-            // float worldRadiusSqrd = MAP_BOUNDS * MAP_BOUNDS;
-            // rlScalef(worldRadiusSqrd, worldRadiusSqrd, worldRadiusSqrd);    // This is the radius of our poincare disk
-
-            // rlScalef(x, y, z);
-
-            
+            SetShaderValue(shader, doHyperbolic, &one, SHADER_UNIFORM_INT);    // C-style bool
+            SetShaderValue(shader, cameraPosUniform, (float[4]){ camera.position.x, camera.position.y, camera.position.z, 0.0f }, SHADER_UNIFORM_VEC4);  // Set uniform
         }
-
+        else{
+            SetShaderValue(shader, doHyperbolic, &zero, SHADER_UNIFORM_INT);    // C-style bool
+        }
 
         // Push the light values to the shader
         UpdateLightValues(shader, lights[0]);
@@ -281,12 +261,7 @@ int main(void)
 		
 		
         DrawModel(floor, floor_pos, 1.0f, WHITE);
-        DrawModel(red_cube, red_cube_pos, 1.0f, RED);
-        DrawModel(pink_sphere, pink_sphere_pos, 1.0f, PINK);
-        DrawModel(blue_cylinder, blue_cylinder_pos, 1.0f, BLUE);
-        DrawModel(green_cone, green_cone_pos, 1.0f, GREEN);
-
-
+        DrawModel(floor_objects, floor_objects_pos, 1.0f, RED);
 
         // Light marker (hidden while the light sits exactly on the camera)
         for (int i = 0; i < MAX_LIGHTS; i++)
@@ -317,14 +292,11 @@ int main(void)
 		sprintf(currentDimensionString, "%s Mode Active. Press [E] To Change", dimensions[currentDimension]);
 		DrawText(currentDimensionString,5,5,20,WHITE);
 
-        if (isHyperbolic){
-            rlPopMatrix();
-        }
         EndDrawing();
     }
 
     UnloadModel(floor);
-    UnloadModel(red_cube);
+    UnloadModel(floor_objects);
     UnloadShader(shader);
     CloseWindow();
     return 0;
