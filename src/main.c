@@ -199,7 +199,7 @@ int main(void)
 
         if (IsKeyPressed(KEY_R)) {
             Matrix currentViewMat = GetCameraMatrix(camera);
-            printf("Player Pos: %f, %f, %f, %f \n", currentViewMat.m0, currentViewMat.m10, currentViewMat.m11, currentViewMat.m12);
+            printf("Player Pos: %f, %f, %f \n", camera.position.x, camera.position.y, camera.position.z);
         }
 
         SetShaderValue(shader, fadeDistanceLoc, &fadeDistance, SHADER_UNIFORM_FLOAT);

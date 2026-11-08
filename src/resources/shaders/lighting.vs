@@ -51,7 +51,7 @@ void main()
         );
         scalingMatrix = stretch * scalingMatrix;
 
-        gl_Position = mvp * scalingMatrix * vec4(cameraVertexDist, 1.0);
+        gl_Position = mvp * inverse(matModel) * scalingMatrix * vec4(-cameraVertexDist, 1.0);
     }
     else{
         gl_Position = mvp * vec4(vertexPosition, 1.0);
