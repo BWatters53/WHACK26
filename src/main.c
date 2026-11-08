@@ -94,7 +94,7 @@ int main(void)
     const float turnSpeed = 90.0f * DEG2RAD;   // radians per second
     const float moveSpeed = 20.0f;              // world units per second
 
-	int currentDimension = 0;
+	int currentDimension = 1;
 
     while (!WindowShouldClose())
     {
@@ -226,11 +226,9 @@ int main(void)
 		//DrawFPS(10, 10); // Do we need this?
 		
 		// 2D Blocker
-		//printf("%sc",dimensions[currentDimension]);
 		if (strcmp(dimensions[currentDimension], "2D") == 0) {
-			//printf("ok");
-			DrawRectangle(0,0, GetScreenWidth(),GetScreenHeight()/2-widthOf2D,WHITE);
-			DrawRectangle(0,GetScreenHeight()/2+widthOf2D,GetScreenWidth(),GetScreenHeight()/2-widthOf2D,WHITE);
+			DrawRectangle(0,0, GetScreenWidth(),GetScreenHeight()/2-widthOf2D,BLACK);
+			DrawRectangle(0,GetScreenHeight()/2+widthOf2D,GetScreenWidth(),GetScreenHeight()/2-widthOf2D,BLACK);
 		}
 
 		// Setting Box
