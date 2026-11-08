@@ -16,7 +16,7 @@ Our project is heavily inspired by the artwork of **M. C. Escher**, particularly
 
 For example, the Poincaré Disc:
 
-![Escher's Poincare Disc Drawing](escher.png "Escher's Poincaré Disc Drawing")
+![Escher's Poincare Disc Drawing](src/escher.png "Escher's Poincaré Disc Drawing")
 
 ### 🚀 Minimum Viable Product (MVP)
 
