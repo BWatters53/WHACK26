@@ -55,7 +55,7 @@ int main(void)
 	// Dimensions Init
 	char dimensions[4][11] = {"2D", "3D", "Hyperbolic", "4D?"};
 
-    const float cameraHeight = 0.5f;
+    const float cameraHeight = 1.5f;
     Camera camera = { 0 };
     camera.position   = (Vector3){ 0.0f, cameraHeight, 10.0f };
     camera.target     = (Vector3){ 50.0f, 2.0f, 50.0f };
