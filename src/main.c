@@ -12,6 +12,7 @@ by Jeffery Myers is marked with CC0 1.0. To view a copy of this license, visit h
 #include "resource_dir.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "float.h"
 
 #define RLIGHTS_IMPLEMENTATION
@@ -81,6 +82,10 @@ int main(void)
     Model map_objects = LoadModel("../assets/stuffOnGround.glb");
     Vector3 map_objects_pos = { 0.0f, -30.0f, 0.0f };
 
+	// 2D Variable Init
+	int widthOf2D = (int) GetScreenHeight() / 50;
+	RenderTexture2D target = LoadRenderTexture(GetScreenWidth(),GetScreenHeight());
+
     // DrawModel uses each material's own shader, NOT the one from BeginShaderMode,
     // so the lighting shader has to be assigned to every material on every model.
     for (int i = 0; i < floor.materialCount; i++)    floor.materials[i].shader    = shader;
@@ -146,6 +151,12 @@ int main(void)
 
 	if (IsKeyPressed(KEY_E)) {
 		currentDimension = (currentDimension + 1)%(sizeof(dimensions)/sizeof(dimensions[0]));
+		if (strcmp(dimensions[currentDimension], "3D") == 0){
+			UnloadRenderTexture(target);
+		} else if (strcmp(dimensions[currentDimension], "2D") == 0) {
+			target = LoadRenderTexture(GetScreenWidth(),GetScreenHeight());
+			ClearBackground(SKYBLUE);
+		}
 	}
 
         // Keep the camera's viewing direction
@@ -186,12 +197,14 @@ int main(void)
         // The shader needs the camera position for specular highlights
         SetShaderValue(shader, shader.locs[SHADER_LOC_VECTOR_VIEW],
                        &camera.position.x, SHADER_UNIFORM_VEC3);
-
-        BeginDrawing();
+		if (strcmp(dimensions[currentDimension], "2D") == 0) {
+			BeginDrawing();
+			BeginTextureMode(target);
+		}
         ClearBackground(SKYBLUE);
-
         BeginMode3D(camera);
-
+		
+		
         DrawModel(floor, floor_pos, 1.0f, WHITE);
         DrawModel(map_objects, map_objects_pos, 1.0f, RED);
 
@@ -201,13 +214,29 @@ int main(void)
             if (lights[i].enabled) DrawSphereEx(lights[i].position, 0.2f, 8, 8, lights[i].color);
             else DrawSphereWires(lights[i].position, 0.2f, 8, 8, ColorAlpha(lights[i].color, 0.3f));
         }
+		EndMode3D();
+		if (strcmp(dimensions[currentDimension], "2D") == 0) {
+			EndTextureMode();
+			int y = GetScreenHeight()/2-widthOf2D;
+			for (y;y<GetScreenHeight()/2+widthOf2D;y++) {
+				DrawTextureRec(target.texture, (Rectangle){ 0, -(GetScreenHeight()/2), GetScreenWidth(),  -1}, (Vector2){ 0, y }, WHITE);
+			}
+		}
 
-        EndMode3D();
+		//DrawFPS(10, 10); // Do we need this?
 		
+		// 2D Blocker
+		//printf("%sc",dimensions[currentDimension]);
+		if (strcmp(dimensions[currentDimension], "2D") == 0) {
+			//printf("ok");
+			DrawRectangle(0,0, GetScreenWidth(),GetScreenHeight()/2-widthOf2D,WHITE);
+			DrawRectangle(0,GetScreenHeight()/2+widthOf2D,GetScreenWidth(),GetScreenHeight()/2-widthOf2D,WHITE);
+		}
+
 		// Setting Box
-		DrawRectangle(0, 0, 250, 30, ColorAlpha(BLACK, 0.5f));
-		char *currentDimensionString = (char*)malloc(13 * sizeof(char));
-		sprintf(currentDimensionString, "%s mode active", dimensions[currentDimension]);
+		DrawRectangle(0, 0, 500, 30, ColorAlpha(BLACK, 0.5f));
+		char *currentDimensionString = (char*)malloc(45 * sizeof(char));
+		sprintf(currentDimensionString, "%s Mode Active. Press [E] To Change", dimensions[currentDimension]);
 		DrawText(currentDimensionString,5,5,20,WHITE);
 
 
