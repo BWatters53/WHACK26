@@ -6,7 +6,6 @@
 #include <string.h>
 #include "float.h"
 #include "rlgl.h"
-#include "rlgl.h"
 
 enum DIMENSION {TWO = 2, THREE = 3};
 #define RLIGHTS_IMPLEMENTATION
@@ -48,7 +47,7 @@ RayCollision GetRayCollisionModel(Ray ray, Model model, Vector3 position)
 int main(void)
 {
     bool isHyperbolic = false;
-    const float MAP_BOUNDS = 1000.0f;
+    const float MAP_BOUNDS = 50.0f;
     const int zero = 0;
     const int one = 1;
     SetConfigFlags(FLAG_VSYNC_HINT | FLAG_WINDOW_HIGHDPI);
@@ -91,8 +90,8 @@ int main(void)
 
     int cameraPosUniform = GetShaderLocation(shader, "cameraPos");
     int doHyperbolic = GetShaderLocation(shader, "doHyperbolic");
-    int pontiDiskRad = GetShaderLocation(shader, "pontiDiskRadSqrd");
-    int pontiDiskRadius = MAP_BOUNDS * MAP_BOUNDS;
+    float pontiDiskRad = GetShaderLocation(shader, "pontiDiskRadSqrd");
+    float pontiDiskRadius = MAP_BOUNDS * MAP_BOUNDS;
     SetShaderValue(shader, doHyperbolic, &zero, SHADER_UNIFORM_INT);
     SetShaderValue(shader, pontiDiskRad, &pontiDiskRadius, SHADER_UNIFORM_FLOAT);
 
@@ -177,12 +176,20 @@ int main(void)
             currentDimension = (currentDimension + 1)%(sizeof(dimensions)/sizeof(dimensions[0]));
             if (strcmp(dimensions[currentDimension], "3D") == 0){
                 UnloadRenderTexture(target);
+                isHyperbolic = false;
             } else if (strcmp(dimensions[currentDimension], "2D") == 0) {
                 target = LoadRenderTexture(GetScreenWidth(),GetScreenHeight());
                 ClearBackground(SKYBLUE);
+                isHyperbolic = false;
+
             } else if (strcmp(dimensions[currentDimension], "Hyperbolic") == 0){
                 isHyperbolic = true;
             }
+        }
+
+        if (IsKeyPressed(KEY_R)) {
+            Matrix currentViewMat = GetCameraMatrix(camera);
+            printf("Player Pos: %f, %f, %f, %f \n", currentViewMat.m0, currentViewMat.m10, currentViewMat.m11, currentViewMat.m12);
         }
 
         SetShaderValue(shader, fadeDistanceLoc, &fadeDistance, SHADER_UNIFORM_FLOAT);
@@ -226,10 +233,8 @@ int main(void)
             SetShaderValue(shader, cameraPosUniform, (float[4]){ camera.position.x, camera.position.y, camera.position.z, 0.0f }, SHADER_UNIFORM_VEC4);  // Set uniform
         }
         else{
-            camera.projection = CAMERA_PERSPECTIVE;
             SetShaderValue(shader, doHyperbolic, &zero, SHADER_UNIFORM_INT);    // C-style bool
         }
-
 
         // Push the light values to the shader
         UpdateLightValues(shader, lights[0]);
@@ -277,9 +282,6 @@ int main(void)
 		sprintf(currentDimensionString, "%s Mode Active. Press [E] To Change", dimensions[currentDimension]);
 		DrawText(currentDimensionString,5,5,20,WHITE);
 
-        if (isHyperbolic){
-            rlPopMatrix();
-        }
         EndDrawing();
     }
 

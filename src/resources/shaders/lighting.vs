@@ -32,7 +32,7 @@ void main()
 
     if (doHyperbolic != 0){
         vec3 cameraVertexDist = vec3(vertexPosition.x - cameraPos.x, vertexPosition.y - cameraPos.y, vertexPosition.z - cameraPos.z);
-        float cameraVertexDistSqrd = vertexPosition.x * vertexPosition.x + vertexPosition.y * vertexPosition.y + vertexPosition.z * vertexPosition.z;
+        float cameraVertexDistSqrd = cameraVertexDist.x * cameraVertexDist.x + cameraVertexDist.y * cameraVertexDist.y + cameraVertexDist.z * cameraVertexDist.z;
         float hyperbolicMultiplier = (1/cameraVertexDistSqrd) * pontiDiskRadSqrd;
         mat4 scalingMatrix = mat4(hyperbolicMultiplier);
 
@@ -44,7 +44,7 @@ void main()
         );
         scalingMatrix = stretch * scalingMatrix;
 
-        gl_Position = mvp * scalingMatrix * vec4(vertexPosition, 1.0);
+        gl_Position = mvp * scalingMatrix * vec4(cameraVertexDist, 1.0);
     }
     else{
         gl_Position = mvp * vec4(vertexPosition, 1.0);
