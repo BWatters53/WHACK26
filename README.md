@@ -65,8 +65,8 @@ If time allows, we might explore representing other forms of dimensional space t
 
 *If You Can't Get Our Project Running, Look Here!*
 
-![2D Demo Image](src/2DShapes.png "Our 2D World")
+![2D Demo Image](demoImages/2DShapes.png "Our 2D World")
 
-![3D Demo Image](src/3DShapes.png "Our 3D World")
+![3D Demo Image](demoImages/3DShapes.png "Our 3D World")
 
-![Hyperbolic Demo Image](src/HyperbolicShapes.png "Our Hyperbolic World")
+![Hyperbolic Demo Image](demoImages/HyperbolicShapes.png "Our Hyperbolic World")
